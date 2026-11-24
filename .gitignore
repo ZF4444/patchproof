@@ -4,3 +4,7 @@ build/
 out/
 
 .venv-http/
+
+.venv/
+.pytest_cache/
+dist/

@@ -28,3 +28,9 @@ Homepage = "https://github.com/RakTikoo/patchproof"
 
 [tool.setuptools]
 packages = ["patchproof", "patchproof.mcp"]
+
+[dependency-groups]
+dev = ["pytest>=9,<10", "httpx>=0.28,<0.29"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,7 +1,7 @@
 ![patchproof — find the 9-slice borders of a whole UI kit, and prove each one](docs/banner.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-17%20passing-brightgreen.svg)](#how-it-works)
+[![Tests](https://img.shields.io/badge/tests-19%20passing-brightgreen.svg)](#how-it-works)
 [![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/RakTikoo/patchproof/releases)
 
 # patchproof — find the 9-slice borders of game UI panels, and prove each one
@@ -16,28 +16,25 @@ Unity, Godot and Unreal all *use* 9-slice borders, but none of them works the nu
 
 ## Install
 
-```
-pip install git+https://github.com/RakTikoo/patchproof
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then
+install the standalone CLI:
+
+```sh
+uv tool install git+https://github.com/RakTikoo/patchproof
 ```
 
-Python 3.10+, Pillow and numpy. Everything runs locally on CPU; no panel ever leaves your machine.
+For development, clone this repository and use its locked environment:
 
-Or from the release files (no registry involved): download
-`patchproof-0.1.0-py3-none-any.whl` from the
-[v0.1.0 release](https://github.com/RakTikoo/patchproof/releases/tag/v0.1.0)
-(check it against the release's SHA256SUMS if you want) and install it:
-
-```
-pip install patchproof-0.1.0-py3-none-any.whl
+```sh
+uv sync --locked --all-extras
+uv run --locked patchproof scan examples --out out
+uv run --locked --all-extras pytest -q
 ```
 
-Or install straight from GitHub at the v0.1.0 tag:
-
-```
-pip install git+https://github.com/RakTikoo/patchproof@v0.1.0
-pipx install git+https://github.com/RakTikoo/patchproof@v0.1.0
-uv tool install git+https://github.com/RakTikoo/patchproof@v0.1.0
-```
+uv manages Python 3.12 and `.venv` automatically. `pyproject.toml` declares
+dependencies and `uv.lock` fixes their resolved versions. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for dependency updates and builds.
+The library supports Python 3.10+; detection runs locally on CPU.
 
 With Homebrew (macOS/Linux):
 
@@ -105,10 +102,10 @@ This repo ships a [SKILL.md](SKILL.md) written to the Agent Skills open standard
 On the synthetic ground-truth suite in `tests/` (flat, gradient, ornamented, asymmetric, transparent-padded, and small/large panels), patchproof recovers **28 of 28 border sides exactly** (100% exact, 100% within 1px). Run it yourself:
 
 ```
-python3 run_tests.py
+uv run --locked --all-extras pytest -q
 ```
 
-17 tests: border recovery, the resynthesis corner invariant, Unity/Godot/Android export round-trips, abstention on photo-like and diagonally-striped images, flip symmetry, and malformed-input handling (empty folder, non-PNG, 1×1, fully transparent, huge flat image — clean one-line errors or sensible verdicts, never a traceback).
+19 tests (including HTTP authentication, MCP tool discovery and persistent detection jobs): border recovery, the resynthesis corner invariant, Unity/Godot/Android export round-trips, abstention on photo-like and diagonally-striped images, flip symmetry, and malformed-input handling (empty folder, non-PNG, 1×1, fully transparent, huge flat image — clean one-line errors or sensible verdicts, never a traceback).
 
 ## Honest limits
 
@@ -125,11 +122,11 @@ MIT — see `LICENSE`. Free for science, games, and everything else.
 
 ## Local HTTP MCP (optional)
 
-Requires Python 3.10+. Install and start once before connecting your MCP client:
+From a repository checkout, install and start once before connecting your MCP client:
 
 ```sh
-pip install '.[http]'
-patchproof-http --allow-root /absolute/path/to/panels
+uv sync --locked --extra http --no-dev
+uv run --locked --extra http --no-dev patchproof-http --allow-root /absolute/path/to/panels
 ```
 
 The service listens on `http://127.0.0.1:18741/mcp`. Configure your client with

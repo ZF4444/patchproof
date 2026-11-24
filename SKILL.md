@@ -2,7 +2,7 @@
 name: patchproof
 description: Find the 9-slice (nine-patch) borders of game UI panel images and prove each detection by re-rendering. Use when asked to work out 9-slice borders for a UI kit, set Unity spriteBorder values, Godot StyleBoxTexture patch margins, or Android .9.png markers for panel PNGs — for example "find the 9-slice borders for these panels", "set up nine-patch for my UI kit", or "which of these panels can be sliced cleanly". Not for making textures tile seamlessly (that is seamproof) or recovering the grid of damaged pixel art (that is snapgrid). Scans a whole folder at once and writes Unity .meta, Godot .tres and Android .9.png files for every proven panel.
 license: MIT
-compatibility: Requires Python 3.10+; pip installs Pillow and numpy. Runs fully locally on CPU; network is needed only to install.
+compatibility: Requires uv; uv manages Python and dependencies. Runs fully locally on CPU; network is needed only to install.
 ---
 
 # patchproof
@@ -14,10 +14,11 @@ patchproof finds the 9-slice borders (left, right, top, bottom) of game UI panel
 ## Install
 
 ```bash
-pip install git+https://github.com/RakTikoo/patchproof
+uv tool install git+https://github.com/RakTikoo/patchproof
 ```
 
-This provides the `patchproof` command.
+This provides the `patchproof` command. For a repository checkout, use
+`uv sync --locked` and `uv run --locked patchproof ...` instead.
 
 ## Run
 
