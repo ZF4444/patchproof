@@ -3,6 +3,7 @@ import hashlib
 import math
 from pathlib import Path
 from PIL import Image, ImageDraw
+from patchproof import __version__
 from patchproof.core import detect, render_9slice
 
 
@@ -33,7 +34,7 @@ def analyze(path, directory, threshold, sizes, connection):
             'detection': {'verdict': result.verdict, 'borders': result.borders if result.verdict == 'PROVEN' else None,
             'transparentPadding': result.padding, 'score': result.score if math.isfinite(result.score) else None,
             'threshold': threshold, 'reason': result.reason or None, 'sizesChecked': result.sizes_checked},
-            'engine': {'name':'patchproof','version':'0.1.0'}, 'artifacts': artifacts})
+            'engine': {'name':'patchproof','version':__version__}, 'artifacts': artifacts})
     except Exception as exc:
         connection.send({'error': {'code':'DETECTION_FAILED','message':str(exc)}})
     finally:

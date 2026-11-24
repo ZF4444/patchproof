@@ -1,7 +1,7 @@
 ![patchproof — find the 9-slice borders of a whole UI kit, and prove each one](docs/banner.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-19%20passing-brightgreen.svg)](#how-it-works)
+[![Tests](https://img.shields.io/badge/tests-21%20passing-brightgreen.svg)](#how-it-works)
 [![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/RakTikoo/patchproof/releases)
 
 # patchproof — find the 9-slice borders of game UI panels, and prove each one
@@ -105,7 +105,7 @@ On the synthetic ground-truth suite in `tests/` (flat, gradient, ornamented, asy
 uv run --locked --all-extras pytest -q
 ```
 
-19 tests (including HTTP authentication, MCP tool discovery and persistent detection jobs): border recovery, the resynthesis corner invariant, Unity/Godot/Android export round-trips, abstention on photo-like and diagonally-striped images, flip symmetry, and malformed-input handling (empty folder, non-PNG, 1×1, fully transparent, huge flat image — clean one-line errors or sensible verdicts, never a traceback).
+21 tests (including HTTP authentication, MCP tool discovery and persistent detection jobs): border recovery, the resynthesis corner invariant, Unity/Godot/Android export round-trips, abstention on photo-like and diagonally-striped images, flip symmetry, and malformed-input handling (empty folder, non-PNG, 1×1, fully transparent, huge flat image — clean one-line errors or sensible verdicts, never a traceback).
 
 ## Honest limits
 
@@ -142,6 +142,11 @@ Tools: `patchproof_get_capabilities`, `patchproof_analyze`,
 Analyze accepts `requestKey`, `items` (each with `clientItemId` and exactly one
 of `assetId` / `localPath`), and optional `options` (`threshold`, `previewSizes`).
 Submit returns a persistent job; poll get_job with `offset`/`limit`.
+Each tool publishes a description, parameter documentation and an output schema.
+Successful calls return both JSON text in `content` and matching
+`structuredContent`. Optional result fields may be null; clients should handle
+per-item errors independently. Initialization and the capabilities `version`
+report the PatchProof service version; `sdk` reports the installed MCP SDK version.
 Identical request keys and payloads reuse the job; changed payloads conflict.
 Completed results survive disconnects; unfinished jobs become `interrupted`
 on restart. Use a new request key to retry interrupted work.
