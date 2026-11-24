@@ -13,7 +13,7 @@ Formats:
 import hashlib
 import re
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 
 def _guid(seed: str) -> str:
@@ -174,6 +174,20 @@ def parse_tres_margins(text: str):
         if not m:
             return None
         out[key] = int(m.group(1))
+    return out
+
+
+def slice_preview_image(img: Image.Image, det) -> Image.Image:
+    """Overlay the four slice guides on a copy of the original image."""
+    out = img.convert("RGBA").copy()
+    w, h = out.size
+    b = det.borders
+    draw = ImageDraw.Draw(out)
+    color = (255, 0, 160, 255)
+    for x in (b["left"], w - b["right"]):
+        draw.line((x, 0, x, h - 1), fill=color)
+    for y in (b["top"], h - b["bottom"]):
+        draw.line((0, y, w - 1, y), fill=color)
     return out
 
 

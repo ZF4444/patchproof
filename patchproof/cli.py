@@ -9,8 +9,8 @@ from pathlib import Path
 from PIL import Image
 
 from . import __version__
-from .core import DEFAULT_THRESHOLD, detect
-from .exports import godot_tres_text, nine_patch_image, unity_meta_text
+from .core import DEFAULT_THRESHOLD, detect, render_9slice
+from .exports import godot_tres_text, nine_patch_image, slice_preview_image, unity_meta_text
 
 
 def _process(path: Path, out_dir: Path, threshold: float) -> dict:
@@ -47,7 +47,15 @@ def _process(path: Path, out_dir: Path, threshold: float) -> dict:
         (out_dir / (stem + ".tres")).write_text(
             godot_tres_text(path.name, det), encoding="utf-8")
         nine_patch_image(img, det).save(out_dir / (stem + ".9.png"))
-        entry["exports"] = [path.name + ".meta", stem + ".tres", stem + ".9.png"]
+        slice_preview_image(img, det).save(out_dir / (stem + ".slices.png"))
+        b = det.borders
+        compact_w = max(det.width // 2, b["left"] + b["right"] + 1)
+        compact_h = max(det.height // 2, b["top"] + b["bottom"] + 1)
+        render_9slice(img, (b["left"], b["right"], b["top"], b["bottom"]),
+                      compact_w, compact_h).save(out_dir / (stem + ".compact.png"))
+        entry["compact_size"] = [compact_w, compact_h]
+        entry["exports"] = [path.name + ".meta", stem + ".tres", stem + ".9.png",
+                            stem + ".slices.png", stem + ".compact.png"]
     return entry
 
 
