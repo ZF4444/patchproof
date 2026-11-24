@@ -77,6 +77,8 @@ For every `PROVEN` panel you get, in the output folder:
 - the panel PNG, plus a **Unity `.meta` sidecar** (`panel.png.meta`) with the `spriteBorder` filled in,
 - a **Godot `.tres`** `StyleBoxTexture` with the patch margins and content margins set,
 - an **Android `.9.png`** with the marker border drawn,
+- a **`.slices.png` preview** with two magenta horizontal and two vertical slice guides overlaid on the original image at its original size (for visual inspection, not engine import),
+- a **`.compact.png` preview** rendered with 9-slice at half the original width and height, clamped to preserve the fixed borders plus at least one centre pixel on each axis. Corners retain their original size; no guide lines are drawn. The actual dimensions are recorded as `compact_size` in the report. This reduces display dimensions, not PNG file size,
 - and `report.json` covering every panel: borders, content padding, verdict, score, sizes checked.
 
 ## Usage
@@ -120,3 +122,47 @@ python3 run_tests.py
 ## License
 
 MIT — see `LICENSE`. Free for science, games, and everything else.
+
+## Local HTTP MCP (optional)
+
+Requires Python 3.10+. Install and start once before connecting your MCP client:
+
+```sh
+pip install '.[http]'
+patchproof-http --allow-root /absolute/path/to/panels
+```
+
+The service listens on `http://127.0.0.1:18741/mcp`. Configure your client with
+that URL and `Authorization: Bearer <token>`. The generated token is stored in
+`~/.patchproof-http/config.json`; do not put it in prompts. `--data-dir` and
+`--port` override defaults. Only one process may own a data directory.
+HTTP MCP uses the pinned official MCP Python SDK 1.26.0 in stateless mode;
+protocol support is determined by that SDK, not by application job IDs.
+This release targets the 2025-11-25 protocol; 2026-07-28 is not claimed.
+
+Tools: `patchproof_get_capabilities`, `patchproof_analyze`,
+`patchproof_get_job`, `patchproof_get_preview`, `patchproof_cancel_job`.
+Analyze accepts `requestKey`, `items` (each with `clientItemId` and exactly one
+of `assetId` / `localPath`), and optional `options` (`threshold`, `previewSizes`).
+Submit returns a persistent job; poll get_job with `offset`/`limit`.
+Identical request keys and payloads reuse the job; changed payloads conflict.
+Completed results survive disconnects; unfinished jobs become `interrupted`
+on restart. Use a new request key to retry interrupted work.
+
+`POST /v1/assets` accepts a raw PNG body (not multipart) and returns its asset ID,
+dimensions and pixel fingerprint. Uploads are limited to 20 MiB / 4 million
+pixels; batches to 100 items; previews to four sizes, each at most 2048×2048.
+Local paths must resolve under an explicit `--allow-root`; they are snapshotted
+before queueing. No arbitrary URL downloads are supported.
+`GET /v1/artifacts/{id}` downloads previews with the same Bearer token.
+Preview tools return artifact metadata; images are downloaded separately.
+`/healthz` is public; `/readyz` requires authentication.
+
+This is a local, single-caller service with one sequential detection worker,
+60-second per-image timeout and persistent SQLite jobs. Cancellation kills the
+active image process and preserves completed results. `UNCERTAIN` results have
+null borders. Pixel fingerprints hash big-endian uint64 width and height followed
+by full RGBA8 bytes. Detection does not validate PSD2UI's one-pixel collapse.
+PSD2UI integration, automated retention, remote multi-user authentication,
+Windows installer/autostart and clean-machine executable packaging remain
+separate work; do not expose this local profile to a network.
