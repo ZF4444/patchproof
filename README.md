@@ -1,7 +1,7 @@
 ![patchproof — find the 9-slice borders of a whole UI kit, and prove each one](docs/banner.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-21%20passing-brightgreen.svg)](#how-it-works)
+[![Tests](https://img.shields.io/badge/tests-22%20passing-brightgreen.svg)](#how-it-works)
 [![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/RakTikoo/patchproof/releases)
 
 # patchproof — find the 9-slice borders of game UI panels, and prove each one
@@ -105,7 +105,7 @@ On the synthetic ground-truth suite in `tests/` (flat, gradient, ornamented, asy
 uv run --locked --all-extras pytest -q
 ```
 
-21 tests (including HTTP authentication, MCP tool discovery and persistent detection jobs): border recovery, the resynthesis corner invariant, Unity/Godot/Android export round-trips, abstention on photo-like and diagonally-striped images, flip symmetry, and malformed-input handling (empty folder, non-PNG, 1×1, fully transparent, huge flat image — clean one-line errors or sensible verdicts, never a traceback).
+22 tests (including HTTP authentication, MCP tool discovery and persistent detection jobs): border recovery, the resynthesis corner invariant, Unity/Godot/Android export round-trips, abstention on photo-like and diagonally-striped images, flip symmetry, and malformed-input handling (empty folder, non-PNG, 1×1, fully transparent, huge flat image — clean one-line errors or sensible verdicts, never a traceback).
 
 ## Honest limits
 
@@ -136,6 +136,22 @@ that URL and `Authorization: Bearer <token>`. The generated token is stored in
 HTTP MCP uses the pinned official MCP Python SDK 1.26.0 in stateless mode;
 protocol support is determined by that SDK, not by application job IDs.
 This release targets the 2025-11-25 protocol; 2026-07-28 is not claimed.
+
+To accept connections from other machines, bind to the network and explicitly
+allow the address clients use (replace the example with your server IP):
+
+```sh
+uv run --locked --extra http --no-dev patchproof-http \
+  --host 0.0.0.0 --allowed-host 192.168.1.20:18741
+```
+
+Connect to `http://192.168.1.20:18741/mcp` with the same Bearer token.
+`--host` controls the listen interface; repeatable `--allowed-host` values match
+the full Host header, including a non-default port. Browser clients that send an
+Origin also need `--allowed-origin https://client.example` for their own origin.
+For public internet access, put HTTPS in front of the service and allow the public
+hostname (for example `--allowed-host patchproof.example.com`). Local paths refer
+to files on the server; remote clients can upload PNGs using `POST /v1/assets`.
 
 Tools: `patchproof_get_capabilities`, `patchproof_analyze`,
 `patchproof_get_job`, `patchproof_get_preview`, `patchproof_cancel_job`.

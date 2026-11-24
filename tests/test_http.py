@@ -29,6 +29,24 @@ def test_http_security_and_mcp(tmp_path):
         assert len(response.json()['result']['tools']) == 5
 
 
+def test_remote_access(tmp_path):
+    app = create_app(tmp_path, token='test',
+                     allowed_hosts=['192.168.1.20:18741'],
+                     allowed_origins=['https://client.example'])
+    with TestClient(app, base_url='http://192.168.1.20:18741') as client:
+        assert client.get('/readyz').status_code == 401
+        headers = {'Authorization': 'Bearer test',
+                   'Accept': 'application/json, text/event-stream'}
+        assert client.get('/readyz', headers=headers).status_code == 200
+        assert client.get('/readyz', headers={**headers, 'Host': 'evil.example'}).status_code == 403
+        assert client.get('/readyz', headers={**headers, 'Origin': 'https://evil.example'}).status_code == 403
+        response = client.post('/mcp', headers={**headers, 'Origin': 'https://client.example'},
+                               json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
+                                     'params': {'protocolVersion': '2025-11-25', 'capabilities': {},
+                                                'clientInfo': {'name': 'remote-test', 'version': '1'}}})
+        assert 'result' in response.json(), response.text
+
+
 def test_jobs(tmp_path):
     async def scenario():
         service = Service(tmp_path)

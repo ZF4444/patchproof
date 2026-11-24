@@ -8,6 +8,7 @@ from pathlib import Path
 import secrets
 from typing import Annotated
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import BaseModel, Field, model_validator
 from starlette.applications import Starlette
 from starlette.requests import Request
@@ -40,11 +41,15 @@ class Options(BaseModel):
     previewSizes: list[Size] = Field(default_factory=list,max_length=4,description="Optional stretch preview sizes; at most four.")
 
 
-def create_app(directory, roots=(), token=None, timeout=60):
+def create_app(directory, roots=(), token=None, timeout=60, *, allowed_hosts=None, allowed_origins=None):
     service = Service(directory, roots, timeout)
     if not token:
         raise ValueError('An access token is required')
-    mcp = FastMCP('PatchProof',stateless_http=True,json_response=True)
+    allowed_hosts = set(allowed_hosts if allowed_hosts is not None else ('127.0.0.1:18741', 'localhost:18741'))
+    allowed_origins = set(allowed_origins if allowed_origins is not None else ('http://127.0.0.1:18741', 'http://localhost:18741'))
+    mcp = FastMCP('PatchProof',stateless_http=True,json_response=True,
+                  transport_security=TransportSecuritySettings(
+                      allowed_hosts=list(allowed_hosts), allowed_origins=list(allowed_origins)))
 
     # SDK 1.26.0 exposes no FastMCP version constructor argument. Set the
     # underlying server version before initialize options are created.
@@ -138,9 +143,9 @@ def create_app(directory, roots=(), token=None, timeout=60):
         async def __call__(self, scope, receive, send):
             if scope['type']=='http':
                 headers = dict(scope['headers'])
-                host = headers.get(b'host',b'').decode().split(':')[0]
+                host = headers.get(b'host',b'').decode()
                 origin = headers.get(b'origin')
-                if host not in ('127.0.0.1','localhost') or (origin and origin.decode() not in ('http://127.0.0.1:18741','http://localhost:18741')):
+                if host not in allowed_hosts or (origin and origin.decode() not in allowed_origins):
                     await JSONResponse({'error':'Host or Origin rejected'},status_code=403)(scope,receive,send)
                     return
                 if scope['path']!='/healthz' and not secrets.compare_digest(headers.get(b'authorization',b''),('Bearer '+token).encode()):
@@ -156,10 +161,13 @@ def create_app(directory, roots=(), token=None, timeout=60):
 
 def main():
     import uvicorn
-    parser = argparse.ArgumentParser(description='PatchProof local HTTP MCP service')
+    parser = argparse.ArgumentParser(description='PatchProof HTTP MCP service')
     parser.add_argument('--data-dir',type=Path,default=Path.home()/'.patchproof-http')
     parser.add_argument('--allow-root',action='append',default=[])
     parser.add_argument('--port',type=int,default=18741)
+    parser.add_argument('--host',default='127.0.0.1',help='Listen address; use 0.0.0.0 for remote access')
+    parser.add_argument('--allowed-host',action='append',default=[],help='Additional accepted Host header, including port when present; repeatable')
+    parser.add_argument('--allowed-origin',action='append',default=[],help='Additional accepted browser Origin (scheme://host[:port]); repeatable')
     args = parser.parse_args()
     args.data_dir.mkdir(parents=True,exist_ok=True)
     config = args.data_dir/'config.json'
@@ -168,4 +176,8 @@ def main():
             config.chmod(0o600)
             json.dump({'token':secrets.token_urlsafe(32)},stream)
     token = json.loads(config.read_text())['token']
-    uvicorn.run(create_app(args.data_dir,args.allow_root,token),host='127.0.0.1',port=args.port,workers=1)
+    hosts = [f'127.0.0.1:{args.port}', f'localhost:{args.port}', *args.allowed_host]
+    origins = [f'http://127.0.0.1:{args.port}', f'http://localhost:{args.port}', *args.allowed_origin]
+    uvicorn.run(create_app(args.data_dir,args.allow_root,token,
+                          allowed_hosts=hosts,allowed_origins=origins),
+                host=args.host,port=args.port,workers=1)
