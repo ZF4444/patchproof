@@ -48,6 +48,26 @@ PANEL_CASES = [
 
 
 class TestRecovery(unittest.TestCase):
+    def test_hidden_rgb_does_not_affect_detection(self):
+        pixels = np.full((96, 80, 4), (7, 9, 11, 255), dtype=np.uint8)
+        pixels[14:78, 12:68, 3] = 0
+        original = pixels.copy()
+        expected = detect(Image.fromarray(pixels))
+        self.assertEqual(expected.verdict, "PROVEN")
+        rng = np.random.default_rng(42)
+        for mode in ("white_rectangle", "random"):
+            changed = original.copy()
+            if mode == "white_rectangle":
+                changed[30:60, 24:50, :3] = 255
+            else:
+                hidden = changed[:, :, 3] == 0
+                changed[hidden, :3] = rng.integers(
+                    0, 256, size=(hidden.sum(), 3), dtype=np.uint8)
+            image = Image.fromarray(changed)
+            with self.subTest(mode=mode):
+                self.assertEqual(detect(image), expected)
+                np.testing.assert_array_equal(np.asarray(image), changed)
+
     def test_recovery_rate(self):
         exact = within1 = total = 0
         for name, kwargs in PANEL_CASES:

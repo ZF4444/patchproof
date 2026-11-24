@@ -489,6 +489,9 @@ def detect(img: Image.Image, threshold: float = DEFAULT_THRESHOLD) -> Detection:
     img = img.convert("RGBA")
     w, h = img.size
     arr = np.asarray(img).astype(np.float64)
+    # Analyse visible colour: hidden RGB in transparent pixels must not
+    # introduce artificial edges. Keep img unchanged for rendering/export.
+    arr[:, :, :3] *= arr[:, :, 3:4] / 255.0
     empty_padding = {"left": 0, "top": 0, "right": 0, "bottom": 0}
     empty_borders = {"left": 0, "right": 0, "top": 0, "bottom": 0}
 
