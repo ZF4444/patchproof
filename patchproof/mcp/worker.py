@@ -2,9 +2,10 @@
 import hashlib
 import math
 from pathlib import Path
-from PIL import Image, ImageDraw
+from PIL import Image
 from patchproof import __version__
 from patchproof.core import detect, render_9slice
+from patchproof.exports import slice_preview_image
 
 
 def analyze(path, directory, threshold, sizes, connection):
@@ -15,12 +16,7 @@ def analyze(path, directory, threshold, sizes, connection):
         artifacts = {}
         if result.verdict == 'PROVEN':
             b = result.borders
-            preview = image.copy()
-            draw = ImageDraw.Draw(preview)
-            for x in (b['left'], image.width - b['right']):
-                draw.line((x, 0, x, image.height), fill='magenta')
-            for y in (b['top'], image.height - b['bottom']):
-                draw.line((0, y, image.width, y), fill='magenta')
+            preview = slice_preview_image(image, result)
             preview.thumbnail((512, 512))
             preview.save(Path(directory) / 'border.png')
             artifacts['borderPreviewId'] = 'border'

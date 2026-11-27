@@ -10,6 +10,7 @@ import json
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
@@ -30,6 +31,7 @@ from patchproof.exports import (  # noqa: E402
     parse_meta_border,
     parse_tres_margins,
     unity_meta_text,
+    slice_preview_image,
 )
 
 PANEL_CASES = [
@@ -118,6 +120,17 @@ class TestResynthesis(unittest.TestCase):
 
 
 class TestExports(unittest.TestCase):
+    def test_preview_draws_only_internal_boundaries(self):
+        image = Image.new('RGBA', (20, 16), (40, 50, 60, 255))
+        det = SimpleNamespace(borders=dict(left=0, right=0, top=0, bottom=0))
+        np.testing.assert_array_equal(slice_preview_image(image, det), image)
+        det.borders = dict(left=2, right=0, top=0, bottom=3)
+        preview = np.array(slice_preview_image(image, det))
+        expected = np.array(image)
+        expected[:, 2] = (255, 0, 160, 255)
+        expected[13, :] = (255, 0, 160, 255)
+        np.testing.assert_array_equal(preview, expected)
+
     def setUp(self):
         self.img, self.truth = make_panel(kind="asym", w=120, h=96,
                                           borders=(10, 22, 8, 16))

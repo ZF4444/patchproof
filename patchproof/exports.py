@@ -185,9 +185,11 @@ def slice_preview_image(img: Image.Image, det) -> Image.Image:
     draw = ImageDraw.Draw(out)
     color = (255, 0, 160, 255)
     for x in (b["left"], w - b["right"]):
-        draw.line((x, 0, x, h - 1), fill=color)
+        if 0 < x < w:
+            draw.line((x, 0, x, h - 1), fill=color)
     for y in (b["top"], h - b["bottom"]):
-        draw.line((0, y, w - 1, y), fill=color)
+        if 0 < y < h:
+            draw.line((0, y, w - 1, y), fill=color)
     return out
 
 
