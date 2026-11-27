@@ -177,7 +177,7 @@ Preview tools return artifact metadata; images are downloaded separately.
 `/healthz` is public; `/readyz` requires authentication.
 
 This is a local, single-caller service with one sequential detection worker,
-60-second per-image timeout and persistent SQLite jobs. Cancellation kills the
+240-second per-image timeout and persistent SQLite jobs. Cancellation kills the
 active image process and preserves completed results. `UNCERTAIN` results have
 null borders. Pixel fingerprints hash big-endian uint64 width and height followed
 by full RGBA8 bytes. Detection does not validate PSD2UI's one-pixel collapse.

@@ -13,7 +13,7 @@ from .worker import analyze
 
 
 class Service:
-    def __init__(self, directory, roots=(), timeout=60):
+    def __init__(self, directory, roots=(), timeout=240):
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
         self.roots = [Path(p).resolve() for p in roots]

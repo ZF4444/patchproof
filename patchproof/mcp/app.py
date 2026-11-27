@@ -41,7 +41,7 @@ class Options(BaseModel):
     previewSizes: list[Size] = Field(default_factory=list,max_length=4,description="Optional stretch preview sizes; at most four.")
 
 
-def create_app(directory, roots=(), token=None, timeout=60, *, allowed_hosts=None, allowed_origins=None):
+def create_app(directory, roots=(), token=None, timeout=240, *, allowed_hosts=None, allowed_origins=None):
     service = Service(directory, roots, timeout)
     if not token:
         raise ValueError('An access token is required')
